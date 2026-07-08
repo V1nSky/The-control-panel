@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>VPN Subscription Dashboard</title>
+<style>
+    :root {
+        --bg: #0f1420;
+        --card: #161d2e;
+        --accent: #5b8cff;
+        --accent-soft: rgba(91, 140, 255, 0.15);
+        --text: #e8ecf4;
+        --muted: #8a93a6;
+        --active: #4ade80;
+        --expired: #f87171;
+        --pending: #fbbf24;
+        --border: #262f45;
+    }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at top, #1a2136 0%, var(--bg) 60%);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+    }
+    .card {
+        width: 100%;
+        max-width: 420px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+    .card h1 {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0 0 4px;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+    }
+    .email {
+        font-size: 22px;
+        font-weight: 600;
+        margin: 0 0 24px;
+        word-break: break-all;
+    }
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 24px;
+    }
+    .status-pill.active { background: rgba(74, 222, 128, 0.12); color: var(--active); }
+    .status-pill.expired { background: rgba(248, 113, 113, 0.12); color: var(--expired); }
+    .status-pill.pending { background: rgba(251, 191, 36, 0.12); color: var(--pending); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+    .row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 14px;
+    }
+    .row:last-of-type { border-bottom: none; }
+    .row .label { color: var(--muted); }
+    .row .value { font-weight: 500; text-align: right; }
+
+    .toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    .toggle .on { color: var(--active); }
+    .toggle .off { color: var(--muted); }
+
+    button.renew {
+        width: 100%;
+        margin-top: 28px;
+        padding: 14px;
+        border: none;
+        border-radius: 10px;
+        background: var(--accent);
+        color: white;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s ease, transform 0.05s ease;
+    }
+    button.renew:hover { background: #4a78e0; }
+    button.renew:active { transform: scale(0.98); }
+    .mock-note {
+        text-align: center;
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 10px;
+    }
+    .empty {
+        text-align: center;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.6;
+    }
+</style>
+</head>
+<body>
+<div class="card">
+    <h1>VPN Subscription</h1>
+
+    {% if user %}
+        <div class="email">{{ user.email }}</div>
+
+        {% if subscription %}
+            <span class="status-pill {{ subscription.status }}">
+                <span class="dot"></span>
+                {% if subscription.status == "active" %}Активна
+                {% elif subscription.status == "expired" %}Истекла
+                {% else %}В ожидании{% endif %}
+            </span>
+
+            <div class="row">
+                <span class="label">Тариф</span>
+                <span class="value">{{ subscription.plan_name }}</span>
+            </div>
+            <div class="row">
+                <span class="label">Действует до</span>
+                <span class="value">
+                    {% if subscription.expires_at %}{{ subscription.expires_at|date:"d.m.Y H:i" }}{% else %}—{% endif %}
+                </span>
+            </div>
+            <div class="row">
+                <span class="label">Автопродление</span>
+                <span class="value toggle">
+                    {% if subscription.auto_renew %}
+                        <span class="on">● Включено</span>
+                    {% else %}
+                        <span class="off">○ Выключено</span>
+                    {% endif %}
+                </span>
+            </div>
+
+            <form method="post" action="{% url 'mock-renew' %}">
+                {% csrf_token %}
+                <input type="hidden" name="email" value="{{ user.email }}">
+                <button type="submit" class="renew">Продлить подписку</button>
+            </form>
+            <div class="mock-note">Mock-кнопка — реальная оплата не выполняется</div>
+        {% else %}
+            <p class="empty">У пользователя пока нет подписки.</p>
+        {% endif %}
+    {% else %}
+        <p class="empty">
+            Пользователь не найден.<br>
+            Добавьте профиль через админку или отправьте webhook‑событие,
+            затем откройте <code>/dashboard/?email=user@test.com</code>.
+        </p>
+    {% endif %}
+</div>
+</body>
+</html>
