@@ -18,7 +18,7 @@ python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-cd vpn_dashboard
+
 python manage.py migrate
 python manage.py createsuperuser   # необязательно, для доступа к /admin/
 python manage.py runserver
